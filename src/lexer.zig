@@ -1,4 +1,6 @@
 const Token = @import("token.zig").Token;
+const TokenType = @import("token.zig").TokenType;
+
 const std = @import("std");
 
 pub const Lexer = struct {
@@ -23,6 +25,7 @@ pub const Lexer = struct {
         if (self.isAtEnd()) {
             return Token{
                 .type = .EOF,
+                .lexeme = "",
                 .line = self.line,
             };
         }
@@ -33,9 +36,12 @@ pub const Lexer = struct {
             '-' => self.makeToken(.Minus),
             '*' => self.makeToken(.Star),
             '/' => self.makeToken(.Slash),
+            '=' => self.makeToken(.Assign),
+            '>' => self.makeToken(.GreaterThan),
+            '<' => self.makeToken(.LessThan),
             '0'...'9' => self.number(),
             'a'...'z', 'A'...'Z', '_' => self.identifier(),
-            _ => error.UnexpectedCharacter,
+            else => error.UnexpectedCharacter,
         };
     }
 
@@ -48,6 +54,14 @@ pub const Lexer = struct {
         return self.source[self.current - 1];
     }
 
+    fn makeToken(self: *Lexer, token_type: TokenType) Token {
+        return Token{
+            .type = token_type,
+            .lexeme = self.source[self.start..self.current],
+            .line = self.line,
+        };
+    }
+
     fn skipWhitespace(self: *Lexer) void {
         while (!self.isAtEnd()) {
             const c = self.source[self.current];
@@ -57,7 +71,7 @@ pub const Lexer = struct {
                     self.line += 1;
                     self.current += 1;
                 },
-                _ => return,
+                else => return,
             }
         }
     }
@@ -70,6 +84,18 @@ pub const Lexer = struct {
     }
 
     fn identifier(self: *Lexer) Token {
-        // TODO
+        while (!self.isAtEnd() and (std.ascii.isAlphanumeric(self.source[self.current]) or self.source[self.current] == '_')) {
+            self.current += 1;
+        }
+        const lexeme = self.source[self.start..self.current];
+        const token_type = if (std.mem.eql(u8, lexeme, "print"))
+            TokenType.Print
+        else if (std.mem.eql(u8, lexeme, "if"))
+            TokenType.If
+        else if (std.mem.eql(u8, lexeme, "while"))
+            TokenType.While
+        else
+            TokenType.Ident;
+        return self.makeToken(token_type);
     }
 };
