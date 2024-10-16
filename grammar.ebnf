@@ -1,0 +1,30 @@
+program        ::= statement*
+
+statement      ::= assignment
+                 | print_stmt
+                 | if_stmt
+                 | while_stmt
+
+assignment     ::= identifier "=" expression
+
+print_stmt     ::= "print" expression
+
+if_stmt        ::= "if" expression statement* "end"
+
+while_stmt     ::= "while" expression statement* "end"
+
+expression     ::= term ((">"|"<") term)*
+
+term           ::= factor (("*"|"/"|"+"|"-") factor)*
+
+factor         ::= integer
+                 | identifier
+                 | "(" expression ")"
+
+identifier     ::= letter (letter | digit)*
+
+integer        ::= digit+
+
+letter         ::= "a" | ... | "z" | "A" | ... | "Z"
+
+digit          ::= "0" | ... | "9"

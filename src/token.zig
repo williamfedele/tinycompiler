@@ -1,4 +1,4 @@
-pub const TokenType = enum { Integer, Plus, Minus, Star, Slash, GreaterThan, LessThan, Assign, Print, If, While, Ident, EOF };
+pub const TokenType = enum { Integer, Plus, Minus, Star, Slash, GreaterThan, LessThan, Assign, LeftParen, RightParen, Print, If, While, End, Identifier, EOF };
 
 pub const Token = struct {
     type: TokenType,

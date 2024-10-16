@@ -3,6 +3,10 @@ const TokenType = @import("token.zig").TokenType;
 
 const std = @import("std");
 
+pub const LexerError = error{
+    UnexpectedCharacter,
+};
+
 pub const Lexer = struct {
     source: []const u8,
     start: usize,
@@ -18,7 +22,7 @@ pub const Lexer = struct {
         };
     }
 
-    pub fn nextToken(self: *Lexer) !Token {
+    pub fn nextToken(self: *Lexer) LexerError!Token {
         self.skipWhitespace();
         self.start = self.current;
 
@@ -39,9 +43,11 @@ pub const Lexer = struct {
             '=' => self.makeToken(.Assign),
             '>' => self.makeToken(.GreaterThan),
             '<' => self.makeToken(.LessThan),
+            '(' => self.makeToken(.LeftParen),
+            ')' => self.makeToken(.RightParen),
             '0'...'9' => self.number(),
             'a'...'z', 'A'...'Z', '_' => self.identifier(),
-            else => error.UnexpectedCharacter,
+            else => LexerError.UnexpectedCharacter,
         };
     }
 
@@ -94,8 +100,10 @@ pub const Lexer = struct {
             TokenType.If
         else if (std.mem.eql(u8, lexeme, "while"))
             TokenType.While
+        else if (std.mem.eql(u8, lexeme, "end"))
+            TokenType.End
         else
-            TokenType.Ident;
+            TokenType.Identifier;
         return self.makeToken(token_type);
     }
 };
