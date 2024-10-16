@@ -2,12 +2,14 @@ const std = @import("std");
 const Lexer = @import("lexer.zig").Lexer;
 const Parser = @import("parser.zig").Parser;
 const ASTNode = @import("parser.zig").ASTNode;
+const CodeGen = @import("codegen.zig").CodeGen;
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
+    // TODO: take this as argument
     const fileName = "test.tc";
 
     const file = try std.fs.cwd().openFile(fileName, .{});
@@ -28,7 +30,13 @@ pub fn main() !void {
         std.debug.print("Error parsing: {}\n", .{err});
         return;
     };
-    printAST(ast, 0);
+    // TODO: give this the same name as the input file
+    const outfile = try std.fs.cwd().createFile("test.py", .{});
+    var codegen = CodeGen.init(outfile);
+    codegen.generate(&ast) catch |err| {
+        std.debug.print("Error generating code: {}\n", .{err});
+        return;
+    };
 }
 
 pub fn printAST(node: ASTNode, indent: usize) void {
