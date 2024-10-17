@@ -62,7 +62,7 @@ pub const Parser = struct {
         const identifier = self.current_token.lexeme;
         try self.advance();
 
-        if (self.current_token.type != .Assign) {
+        if (self.current_token.type != .Equal) {
             return ParseError.UnexpectedToken;
         }
         try self.advance();
@@ -136,7 +136,10 @@ pub const Parser = struct {
         var left = try self.parseTerm();
 
         while (self.current_token.type == .GreaterThan or
-            self.current_token.type == .LessThan)
+            self.current_token.type == .LessThan or
+            self.current_token.type == .GreaterThanEqual or
+            self.current_token.type == .LessThanEqual or
+            self.current_token.type == .EqualEqual)
         {
             const op = self.current_token.type;
             try self.advance();
@@ -204,7 +207,6 @@ pub const Parser = struct {
                 try self.advance();
                 const expr = try self.parseExpression();
                 if (self.current_token.type != .RightParen) {
-                    std.log.info("TOKEN_TYPE: {s}\n", .{@tagName(self.current_token.type)});
                     return ParseError.UnexpectedToken;
                 }
                 try self.advance();

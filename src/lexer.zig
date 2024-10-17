@@ -40,15 +40,24 @@ pub const Lexer = struct {
             '-' => self.makeToken(.Minus),
             '*' => self.makeToken(.Star),
             '/' => self.makeToken(.Slash),
-            '=' => self.makeToken(.Assign),
-            '>' => self.makeToken(.GreaterThan),
-            '<' => self.makeToken(.LessThan),
+            '=' => if (self.peekNextChar('=')) self.makeToken(.EqualEqual) else self.makeToken(.Equal),
+            '>' => if (self.peekNextChar('=')) self.makeToken(.GreaterThanEqual) else self.makeToken(.GreaterThan),
+            '<' => if (self.peekNextChar('=')) self.makeToken(.LessThanEqual) else self.makeToken(.LessThan),
             '(' => self.makeToken(.LeftParen),
             ')' => self.makeToken(.RightParen),
             '0'...'9' => self.number(),
             'a'...'z', 'A'...'Z', '_' => self.identifier(),
             else => LexerError.UnexpectedCharacter,
         };
+    }
+
+    // Look ahead at the next char in the source file.
+    // If it matches the expected char, advance.
+    fn peekNextChar(self: *Lexer, expected: u8) bool {
+        if (self.isAtEnd()) return false;
+        if (self.source[self.current] != expected) return false;
+        self.current += 1;
+        return true;
     }
 
     fn isAtEnd(self: *Lexer) bool {
