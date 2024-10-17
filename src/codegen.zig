@@ -69,13 +69,7 @@ pub const CodeGen = struct {
             .BinaryExpr => |bin_expr| {
                 const writer = self.buf_writer.writer();
                 try self.traverse(bin_expr.left, indentLevel);
-                switch (bin_expr.operator) {
-                    .GreaterThan => try writer.writeAll(" > "),
-                    .LessThan => try writer.writeAll(" < "),
-                    .Plus => try writer.writeAll(" + "),
-                    .Minus => try writer.writeAll(" - "),
-                    else => return,
-                }
+                try writer.print(" {s} ", .{bin_expr.operator.toString()});
                 try self.traverse(bin_expr.right, indentLevel);
             },
             .Integer => |data| {
