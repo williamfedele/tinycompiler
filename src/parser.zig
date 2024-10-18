@@ -4,7 +4,30 @@ const LexerError = @import("lexer.zig").LexerError;
 const Token = @import("token.zig").Token;
 const TokenType = @import("token.zig").TokenType;
 
-pub const ParseError = error{ UnexpectedToken, InvalidExpression, OutOfMemory } || std.fmt.ParseIntError || LexerError;
+pub const ParserError = struct {
+    message: []const u8,
+    line: usize,
+    column: usize,
+    source_line: []const u8,
+
+    pub fn format(self: ParserError, comptime _: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
+        try writer.print("Parser error at line {d}:{d}: {s}\n\n{s}\n", .{
+            self.line,
+            self.column,
+            self.message,
+            self.source_line,
+        });
+
+        var i: usize = 0;
+        while (i < self.column - 1) : (i += 1) {
+            try writer.writeByte('~');
+        }
+        try writer.writeByte('^');
+        try writer.writeByte('\n');
+    }
+};
+
+pub const ParseError = error{ UnexpectedToken, SyntaxError, OutOfMemory } || std.fmt.ParseIntError || LexerError;
 
 pub const ASTNode = union(enum) {
     Program: []ASTNode,
@@ -54,7 +77,7 @@ pub const Parser = struct {
             .Print => self.parsePrintStatement(),
             .If => self.parseIfStatement(),
             .While => self.parseWhileStatement(),
-            else => ParseError.UnexpectedToken,
+            else => self.reportError("Unexpected token: expected statement."),
         };
     }
 
@@ -63,7 +86,7 @@ pub const Parser = struct {
         try self.advance();
 
         if (self.current_token.type != .Equal) {
-            return ParseError.UnexpectedToken;
+            return self.reportError("Unexpected token: expected '='.");
         }
         try self.advance();
 
@@ -207,13 +230,37 @@ pub const Parser = struct {
                 try self.advance();
                 const expr = try self.parseExpression();
                 if (self.current_token.type != .RightParen) {
-                    return ParseError.UnexpectedToken;
+                    return self.reportError("Unexpected token: expected ')'.");
                 }
                 try self.advance();
                 return expr;
             },
-            else => return ParseError.InvalidExpression,
+            else => return self.reportError("Unexpected token: expected term."),
         }
+    }
+
+    pub fn reportError(self: *Parser, comptime message: []const u8) ParseError {
+        const error_msg = ParserError{
+            .message = message,
+            .line = self.current_token.line,
+            .column = self.lexer.column,
+            .source_line = self.getCurrentLine(),
+        };
+
+        std.log.err("{}", .{error_msg});
+        return error.UnexpectedToken;
+    }
+
+    pub fn getCurrentLine(self: *Parser) []const u8 {
+        var line_start = self.lexer.current;
+        while (line_start > 0 and self.lexer.source[line_start - 1] != '\n') {
+            line_start -= 1;
+        }
+        var line_end = self.lexer.current;
+        while (line_end < self.lexer.source.len and self.lexer.source[line_end] != '\n') {
+            line_end += 1;
+        }
+        return self.lexer.source[line_start..line_end];
     }
 
     fn freeASTNode(self: *Parser, node: *ASTNode) void {

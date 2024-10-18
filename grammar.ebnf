@@ -13,7 +13,7 @@ if_stmt        ::= "if" expression statement* "end"
 
 while_stmt     ::= "while" expression statement* "end"
 
-expression     ::= term ((">"|"<") term)*
+expression     ::= term ((">"|"<"|">="|"<="|"==") term)*
 
 term           ::= factor (("*"|"/"|"+"|"-") factor)*
 

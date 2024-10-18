@@ -26,8 +26,8 @@ pub fn main() !void {
 
     var lexer = Lexer.init(source);
     var parser = try Parser.init(&lexer, allocator);
-    const ast = parser.parse() catch |err| {
-        std.debug.print("Error parsing: {}\n", .{err});
+    const ast = parser.parse() catch {
+        std.debug.print("Compilation failed while parsing. Aborting.\n", .{});
         return;
     };
     // TODO: give this the same name as the input file

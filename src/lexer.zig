@@ -12,6 +12,7 @@ pub const Lexer = struct {
     start: usize,
     current: usize,
     line: u32,
+    column: u32,
 
     pub fn init(source: []const u8) Lexer {
         return Lexer{
@@ -19,6 +20,7 @@ pub const Lexer = struct {
             .start = 0,
             .current = 0,
             .line = 1,
+            .column = 0,
         };
     }
 
@@ -57,6 +59,7 @@ pub const Lexer = struct {
         if (self.isAtEnd()) return false;
         if (self.source[self.current] != expected) return false;
         self.current += 1;
+        self.column += 1;
         return true;
     }
 
@@ -66,6 +69,7 @@ pub const Lexer = struct {
 
     fn advance(self: *Lexer) u8 {
         self.current += 1;
+        self.column += 1;
         return self.source[self.current - 1];
     }
 
@@ -81,10 +85,14 @@ pub const Lexer = struct {
         while (!self.isAtEnd()) {
             const c = self.source[self.current];
             switch (c) {
-                ' ', '\r', '\t' => self.current += 1,
+                ' ', '\r', '\t' => {
+                    self.current += 1;
+                    self.column += 1;
+                },
                 '\n' => {
                     self.line += 1;
                     self.current += 1;
+                    self.column = 0;
                 },
                 else => return,
             }
@@ -94,6 +102,7 @@ pub const Lexer = struct {
     fn number(self: *Lexer) Token {
         while (!self.isAtEnd() and std.ascii.isDigit(self.source[self.current])) {
             self.current += 1;
+            self.column += 1;
         }
         return self.makeToken(.Integer);
     }
@@ -101,6 +110,7 @@ pub const Lexer = struct {
     fn identifier(self: *Lexer) Token {
         while (!self.isAtEnd() and (std.ascii.isAlphanumeric(self.source[self.current]) or self.source[self.current] == '_')) {
             self.current += 1;
+            self.column += 1;
         }
         const lexeme = self.source[self.start..self.current];
         const token_type = if (std.mem.eql(u8, lexeme, "print"))
