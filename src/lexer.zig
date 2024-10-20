@@ -1,11 +1,9 @@
+const ErrorContext = @import("errors.zig").ErrorContext;
+const CompilerError = @import("errors.zig").CompilerError;
 const Token = @import("token.zig").Token;
 const TokenType = @import("token.zig").TokenType;
 
 const std = @import("std");
-
-pub const LexerError = error{
-    UnexpectedCharacter,
-};
 
 pub const Lexer = struct {
     source: []const u8,
@@ -24,7 +22,7 @@ pub const Lexer = struct {
         };
     }
 
-    pub fn nextToken(self: *Lexer) LexerError!Token {
+    pub fn nextToken(self: *Lexer) CompilerError!Token {
         self.skipWhitespace();
         self.start = self.current;
 
@@ -49,7 +47,7 @@ pub const Lexer = struct {
             ')' => self.makeToken(.RightParen),
             '0'...'9' => self.number(),
             'a'...'z', 'A'...'Z', '_' => self.identifier(),
-            else => LexerError.UnexpectedCharacter,
+            else => return self.reportError(CompilerError.UnexpectedCharacter, "Unexpected character found.", null),
         };
     }
 
@@ -124,5 +122,12 @@ pub const Lexer = struct {
         else
             TokenType.Identifier;
         return self.makeToken(token_type);
+    }
+
+    pub fn reportError(self: *Lexer, err: CompilerError, comptime message: []const u8, expected: ?[]const u8) CompilerError {
+        const error_ctx = ErrorContext.create(err, .{ .line = self.line, .column = self.column }, message, expected, self.source[self.start..self.current]);
+
+        std.log.err("{}", .{error_ctx});
+        return err;
     }
 };
