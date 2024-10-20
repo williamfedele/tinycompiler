@@ -16,6 +16,7 @@ pub const TokenType = enum {
     RightParen,
     Print,
     If,
+    Else,
     While,
     End,
     Identifier,

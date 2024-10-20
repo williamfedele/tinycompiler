@@ -50,8 +50,19 @@ pub const CodeGen = struct {
                 try writer.writeAll("if ");
                 try self.traverse(if_stmt.condition, indentLevel);
                 try writer.writeAll(":\n");
-                for (if_stmt.body) |*stmt| {
+
+                for (if_stmt.then_body) |*stmt| {
                     try self.traverse(stmt, indentLevel + 1);
+                }
+
+                if (if_stmt.else_body) |else_body| {
+                    for (0..indentLevel) |_| {
+                        try writer.writeAll("\t");
+                    }
+                    try writer.writeAll("else:\n");
+                    for (else_body) |*stmt| {
+                        try self.traverse(stmt, indentLevel + 1);
+                    }
                 }
             },
             .WhileStmt => |while_stmt| {

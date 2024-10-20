@@ -9,7 +9,7 @@ assignment     ::= identifier "=" expression
 
 print_stmt     ::= "print" expression
 
-if_stmt        ::= "if" expression statement* "end"
+if_stmt        ::= "if" expression statement* ("else" statement*)? "end"
 
 while_stmt     ::= "while" expression statement* "end"
 

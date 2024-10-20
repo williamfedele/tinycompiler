@@ -99,10 +99,20 @@ pub const SymbolTable = struct {
             .PrintStmt => {},
             .IfStmt => |if_stmt| {
                 try self.enterScope();
-                defer self.exitScope();
 
-                for (if_stmt.body) |*stmt| {
+                for (if_stmt.then_body) |*stmt| {
                     try self.build(stmt);
+                }
+
+                self.exitScope();
+
+                if (if_stmt.else_body) |else_body| {
+                    try self.enterScope();
+                    defer self.exitScope();
+
+                    for (else_body) |*stmt| {
+                        try self.build(stmt);
+                    }
                 }
             },
             .WhileStmt => |while_stmt| {

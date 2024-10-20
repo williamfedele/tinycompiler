@@ -76,7 +76,7 @@ pub fn printAST(node: ASTNode, indent: usize) void {
             stdout.print("  Condition:\n", .{}) catch unreachable;
             printAST(if_stmt.condition.*, indent + 2);
             stdout.print("  Body:\n", .{}) catch unreachable;
-            for (if_stmt.body) |stmt| {
+            for (if_stmt.then_body) |stmt| {
                 printAST(stmt, indent + 2);
             }
         },

@@ -115,6 +115,8 @@ pub const Lexer = struct {
             TokenType.Print
         else if (std.mem.eql(u8, lexeme, "if"))
             TokenType.If
+        else if (std.mem.eql(u8, lexeme, "else"))
+            TokenType.Else
         else if (std.mem.eql(u8, lexeme, "while"))
             TokenType.While
         else if (std.mem.eql(u8, lexeme, "end"))

@@ -72,27 +72,56 @@ pub const Parser = struct {
     }
 
     fn parseIfStatement(self: *Parser) CompilerError!ASTNode {
+        // Consume 'if'
         try self.advance();
+
         const condition = try self.allocator.create(ASTNode);
         condition.* = try self.parseExpression();
 
-        var body = std.ArrayList(ASTNode).init(self.allocator);
+        var then_body = std.ArrayList(ASTNode).init(self.allocator);
         errdefer {
-            for (body.items) |*node| {
+            for (then_body.items) |*node| {
                 self.freeASTNode(node);
             }
-            body.deinit();
+            then_body.deinit();
         }
 
-        while (self.current_token.type != .End) {
+        while (self.current_token.type != .Else and self.current_token.type != .End) {
             const stmt = try self.parseStatement();
-            try body.append(stmt);
+            try then_body.append(stmt);
         }
+
+        var else_body: ?[]ASTNode = null;
+        if (self.current_token.type == .Else) {
+            // Consume 'else'
+            try self.advance();
+
+            var else_statements = std.ArrayList(ASTNode).init(self.allocator);
+            errdefer {
+                for (else_statements.items) |*node| {
+                    self.freeASTNode(node);
+                }
+                else_statements.deinit();
+            }
+
+            while (self.current_token.type != .End) {
+                const stmt = try self.parseStatement();
+                try else_statements.append(stmt);
+            }
+            else_body = try else_statements.toOwnedSlice();
+        }
+
+        if (self.current_token.type != .End) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected 'end'", "End");
+        }
+
+        // Consume 'end'
         try self.advance();
 
         return ASTNode{ .IfStmt = .{
             .condition = condition,
-            .body = try body.toOwnedSlice(),
+            .then_body = try then_body.toOwnedSlice(),
+            .else_body = else_body,
         } };
     }
 
@@ -243,10 +272,18 @@ pub const Parser = struct {
             .IfStmt => |if_stmt| {
                 self.freeASTNode(if_stmt.condition);
                 self.allocator.destroy(if_stmt.condition);
-                for (if_stmt.body) |*stmt| {
+
+                for (if_stmt.then_body) |*stmt| {
                     self.freeASTNode(stmt);
                 }
-                self.allocator.free(if_stmt.body);
+                self.allocator.free(if_stmt.then_body);
+
+                if (if_stmt.else_body) |else_body| {
+                    for (else_body) |*stmt| {
+                        self.freeASTNode(stmt);
+                    }
+                    self.allocator.free(else_body);
+                }
             },
             .WhileStmt => |while_stmt| {
                 self.freeASTNode(while_stmt.condition);
