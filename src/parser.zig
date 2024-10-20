@@ -3,6 +3,7 @@ const Lexer = @import("lexer.zig").Lexer;
 const LexerError = @import("lexer.zig").LexerError;
 const Token = @import("token.zig").Token;
 const TokenType = @import("token.zig").TokenType;
+const ASTNode = @import("ast.zig").ASTNode;
 
 pub const ParserError = struct {
     message: []const u8,
@@ -28,17 +29,6 @@ pub const ParserError = struct {
 };
 
 pub const ParseError = error{ UnexpectedToken, SyntaxError, OutOfMemory } || std.fmt.ParseIntError || LexerError;
-
-pub const ASTNode = union(enum) {
-    Program: []ASTNode,
-    Assignment: struct { identifier: []const u8, value: *ASTNode },
-    PrintStmt: *ASTNode,
-    IfStmt: struct { condition: *ASTNode, body: []ASTNode },
-    WhileStmt: struct { condition: *ASTNode, body: []ASTNode },
-    BinaryExpr: struct { left: *ASTNode, operator: TokenType, right: *ASTNode },
-    Integer: i64,
-    Identifier: []const u8,
-};
 
 pub const Parser = struct {
     lexer: *Lexer,

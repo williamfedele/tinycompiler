@@ -1,5 +1,5 @@
 const std = @import("std");
-const ASTNode = @import("parser.zig").ASTNode; // TODO: should probably extract this type
+const ASTNode = @import("ast.zig").ASTNode;
 
 pub const CodeGen = struct {
     // TODO: pre-codegen phase to create a symbol table for semantic error handling

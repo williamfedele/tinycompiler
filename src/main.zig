@@ -2,6 +2,7 @@ const std = @import("std");
 const Lexer = @import("lexer.zig").Lexer;
 const Parser = @import("parser.zig").Parser;
 const ASTNode = @import("parser.zig").ASTNode;
+const SymbolTable = @import("symtab.zig").SymbolTable;
 const CodeGen = @import("codegen.zig").CodeGen;
 
 pub fn main() !void {
@@ -30,6 +31,15 @@ pub fn main() !void {
         std.debug.print("Compilation failed while parsing. Aborting.\n", .{});
         return;
     };
+
+    var symbol_table = try SymbolTable.init(allocator);
+    defer symbol_table.deinit();
+
+    symbol_table.build(&ast) catch {
+        std.debug.print("Semantic errors founds. Aborting.\n", .{});
+        return;
+    };
+
     // TODO: give this the same name as the input file
     const outfile = try std.fs.cwd().createFile("test.py", .{});
     var codegen = CodeGen.init(outfile);
