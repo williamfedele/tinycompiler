@@ -95,6 +95,9 @@ pub const SymbolTable = struct {
                     try self.build(stmt);
                 }
             },
+            .VarDecl => {
+                // TODO
+            },
             .Assignment => {},
             .PrintStmt => {},
             .IfStmt => |if_stmt| {

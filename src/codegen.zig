@@ -24,6 +24,21 @@ pub const CodeGen = struct {
                     try self.traverse(stmt, indentLevel);
                 }
             },
+            .VarDecl => |var_decl| {
+                const writer = self.buf_writer.writer();
+                for (0..indentLevel) |_| {
+                    try writer.writeAll("\t");
+                }
+                // var type annotation is available for future usage
+                try writer.print("{s} = ", .{var_decl.identifier});
+                if (var_decl.initial_value) |init_value| {
+                    try self.traverse(init_value, indentLevel);
+                } else {
+                    try writer.writeAll("0");
+                }
+
+                try writer.writeAll("\n");
+            },
             .Assignment => |assign| {
                 const writer = self.buf_writer.writer();
                 for (0..indentLevel) |_| {

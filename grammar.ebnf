@@ -1,13 +1,16 @@
 program        ::= statement*
 
-statement      ::= assignment
+statement      ::= var_decl
+                 | assignment
                  | print_stmt
                  | if_stmt
                  | while_stmt
 
-assignment     ::= identifier "=" expression
+var_decl       ::= "var" identifier ":" var_type ("=" expression)? ";"
 
-print_stmt     ::= "print" expression
+assignment     ::= identifier "=" expression ";"
+
+print_stmt     ::= "print" expression ";"
 
 if_stmt        ::= "if" expression statement* ("else" statement*)? "end"
 
@@ -25,6 +28,6 @@ identifier     ::= letter (letter | digit)*
 
 integer        ::= digit+
 
-letter         ::= "a" | ... | "z" | "A" | ... | "Z"
+letter         ::= [a-zA-Z]
 
-digit          ::= "0" | ... | "9"
+digit          ::= [0-9]

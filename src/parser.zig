@@ -39,12 +39,59 @@ pub const Parser = struct {
 
     fn parseStatement(self: *Parser) CompilerError!ASTNode {
         return switch (self.current_token.type) {
+            .Var => self.parseVarDeclaration(),
             .Identifier => self.parseAssignment(),
             .Print => self.parsePrintStatement(),
             .If => self.parseIfStatement(),
             .While => self.parseWhileStatement(),
             else => self.reportError(CompilerError.UnexpectedToken, "Expected statement.", "Statement"),
         };
+    }
+
+    fn parseVarDeclaration(self: *Parser) CompilerError!ASTNode {
+        // Consume 'var'
+        try self.advance();
+
+        // Var identifier
+        if (self.current_token.type != .Identifier) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected identifier.", "Identifier");
+        }
+        const identifier = self.current_token.lexeme;
+        try self.advance();
+
+        // Type annotation
+        if (self.current_token.type != .Colon) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected ':'.", "Colon");
+        }
+        try self.advance();
+
+        // Var type
+        if (self.current_token.type != .Type) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected type.", "Type");
+        }
+        const var_type = self.current_token.lexeme;
+        try self.advance();
+
+        var initial_value: ?*ASTNode = null;
+        if (self.current_token.type == .Equal) {
+            try self.advance();
+
+            const value = try self.allocator.create(ASTNode);
+            errdefer self.allocator.destroy(value);
+            value.* = try self.parseExpression();
+            initial_value = value;
+        }
+
+        if (self.current_token.type != .Semicolon) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected ';'.", "Semicolon");
+        }
+        try self.advance();
+
+        return ASTNode{ .VarDecl = .{
+            .identifier = identifier,
+            .var_type = var_type,
+            .initial_value = initial_value,
+        } };
     }
 
     fn parseAssignment(self: *Parser) CompilerError!ASTNode {
@@ -60,6 +107,11 @@ pub const Parser = struct {
         errdefer self.allocator.destroy(value);
         value.* = try self.parseExpression();
 
+        if (self.current_token.type != .Semicolon) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected ';'.", "Semicolon");
+        }
+        try self.advance();
+
         return ASTNode{ .Assignment = .{ .identifier = identifier, .value = value } };
     }
 
@@ -68,6 +120,12 @@ pub const Parser = struct {
         const expr = try self.allocator.create(ASTNode);
         errdefer self.allocator.destroy(expr);
         expr.* = try self.parseExpression();
+
+        if (self.current_token.type != .Semicolon) {
+            return self.reportError(CompilerError.UnexpectedToken, "Expected ';'.", "Semicolon");
+        }
+        try self.advance();
+
         return ASTNode{ .PrintStmt = expr };
     }
 
@@ -260,6 +318,11 @@ pub const Parser = struct {
                     self.freeASTNode(stmt);
                 }
                 self.allocator.free(statements);
+            },
+            .VarDecl => |var_decl| {
+                if (var_decl.initial_value) |init_value| {
+                    self.freeASTNode(init_value);
+                }
             },
             .Assignment => |assign| {
                 self.freeASTNode(assign.value);

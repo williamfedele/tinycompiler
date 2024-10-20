@@ -36,6 +36,8 @@ pub const Lexer = struct {
 
         const c = self.advance();
         return switch (c) {
+            ':' => self.makeToken(.Colon),
+            ';' => self.makeToken(.Semicolon),
             '+' => self.makeToken(.Plus),
             '-' => self.makeToken(.Minus),
             '*' => self.makeToken(.Star),
@@ -111,6 +113,14 @@ pub const Lexer = struct {
             self.column += 1;
         }
         const lexeme = self.source[self.start..self.current];
+
+        // Extend with more types
+        if (std.mem.eql(u8, lexeme, "int")) {
+            return self.makeToken(.Type);
+        }
+
+        // TODO: organize this
+
         const token_type = if (std.mem.eql(u8, lexeme, "print"))
             TokenType.Print
         else if (std.mem.eql(u8, lexeme, "if"))
@@ -121,6 +131,8 @@ pub const Lexer = struct {
             TokenType.While
         else if (std.mem.eql(u8, lexeme, "end"))
             TokenType.End
+        else if (std.mem.eql(u8, lexeme, "var"))
+            TokenType.Var
         else
             TokenType.Identifier;
         return self.makeToken(token_type);

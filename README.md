@@ -11,35 +11,43 @@
 
 ## Syntax
 
-The syntax is intentionally simple to make this a Zig learning experience rather than one of compiler design. I may extend it to include other features that are relatively simple like functions.
+The syntax is intentionally simple to make this a Zig learning experience rather than one purely of compiler design. I'm not a compiler engineer, so don't expect big things haha. I may extend it to include other features that are relatively simple like functions.
 
 **Datatypes**: Only integers are valid at the moment.
 
-**Keywords**: _if, while, end, print_.
+**Keywords**: _var, int, if, while, end, print_.
 
 ### Example Usage
 Source file:
 ```
-x = 10/2
-y = 5*2+1
+var x: int = 10;
+var y: int;
+y = 5*2+1;
 
-if (x <= y) print x+2 end
+if (x <= y) 
+    print x;
+else
+    print y;
+end
 
 while (y >= x)
-    print y
+    print y;
     if (y == 7)
-        x = x - 1
+        x = x - 1;
     end
-    y = y - 1
+    y = y - 1;
 end
 ```
 
 Translated output (python for now):
 ```py
-x = 10 / 2
+x = 10
+y = 0
 y = 5 * 2 + 1
 if x <= y:
-	print(x + 2)
+	print(x)
+else:
+	print(y)
 while y >= x:
 	print(y)
 	if y == 7:
