@@ -1,4 +1,6 @@
 const std = @import("std");
+const CompilerError = @import("errors.zig").CompilerError;
+const ErrorContext = @import("errors.zig").ErrorContext;
 const Allocator = std.mem.Allocator;
 const ASTNode = @import("ast.zig").ASTNode;
 
@@ -65,11 +67,7 @@ pub const SymbolTable = struct {
         }
     }
 
-    pub fn addSymbol(self: *SymbolTable, identifier: []const u8, symbol_type: SymbolType) !void {
-        if (self.current_scope.symbols.contains(identifier)) {
-            std.log.err("Identifier already exists", .{});
-            return;
-        }
+    pub fn addSymbol(self: *SymbolTable, identifier: []const u8, symbol_type: SymbolType) CompilerError!void {
         try self.current_scope.symbols.put(identifier, .{
             .identifier = identifier,
             .symbol_type = symbol_type,
@@ -78,13 +76,14 @@ pub const SymbolTable = struct {
 
     // Search for a symbol in valid scopes.
     pub fn lookupSymbol(self: *SymbolTable, identifier: []const u8) ?Symbol {
-        var current = self.current_scope;
+        var current: ?*Scope = self.current_scope;
         while (current) |scope| {
             if (scope.symbols.get(identifier)) |symbol| {
                 return symbol;
             }
             current = scope.parent;
         }
+        return null;
     }
 
     // TODO: make sure variable usage in RHS of statements are valid (declared, in scope)
@@ -92,11 +91,16 @@ pub const SymbolTable = struct {
         switch (node.*) {
             .Program => |statements| {
                 for (statements) |*stmt| {
-                    try self.build(stmt);
+                    self.build(stmt) catch |err| {
+                        return err;
+                    };
                 }
             },
-            .VarDecl => {
-                // TODO
+            .VarDecl => |var_decl| {
+                if (self.lookupSymbol(var_decl.identifier)) |_| {
+                    std.log.warn("Variable is shadowed: {s}", .{var_decl.identifier});
+                }
+                try self.addSymbol(var_decl.identifier, .Variable);
             },
             .Assignment => {},
             .PrintStmt => {},

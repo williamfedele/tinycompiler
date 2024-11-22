@@ -18,6 +18,7 @@ pub const CompilerError = error{
 
     // Type checking
     UndefinedVariable,
+    ShadowedVariable,
 
     // General
     OutOfMemory,
